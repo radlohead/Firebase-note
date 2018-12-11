@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>firebase note</title>
+    <style>
+        .textarea {
+            width: 300px;
+            height: 50px;
+            border: 1px solid #777;
+        }
+    </style>
+</head>
+<body>
+    <textarea class="textarea"></textarea>
+    <div class="result"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase.js"></script>
+    <script>
+    var auth;
+    var database;
+    var userInfo;
+    // Initialize Firebase
+    var config = {
+        apiKey: "AIzaSyBM0c8gHwZAD7ABjNke1bHDZgZzTK4HIuY",
+        authDomain: "memowebapp-1fc0c.firebaseapp.com",
+        databaseURL: "https://memowebapp-1fc0c.firebaseio.com",
+        projectId: "memowebapp-1fc0c",
+        storageBucket: "memowebapp-1fc0c.appspot.com",
+        messagingSenderId: "754252444459"
+    };
+    firebase.initializeApp(config);
+    auth = firebase.auth();
+    database = firebase.database();
+    var authProvider = new firebase.auth.GoogleAuthProvider();
+    
+    auth.onAuthStateChanged(function(user){
+        if (user) {
+            console.log("success");
+            userInfo = user;
+            get_memo_list();
+        } else {
+            console.log("login fail");
+            auth.signInWithPopup(authProvider);
+        }
+    });
+
+    function get_memo_list(){
+        var memoRef = database.ref('memos/'+ userInfo.uid);
+        
+        memoRef.on('child_added', on_added_child);
+    }
+
+    function on_added_child(data){
+        var key = data.key;
+        var memoData = data.val();
+        var txt = memoData.txt;
+        var title = memoData.title;
+        var firstTxt = txt.substr(0, 1);
+
+        var html = `<li id=${key} onClick=get_data_one(this.id);>
+            <i>${firstTxt}</i>
+            <span>${title}</span>
+            <p>${txt}</p>
+        </li>`;
+
+        document.querySelector(".result").innerHTML += html;
+    }
+
+    function saveData(){
+        var memoRef = database.ref('memos/'+ userInfo.uid);
+        var txt = document.querySelector(".textarea").value;
+
+        if (txt === "") {
+            return;
+        }
+
+        memoRef.push({
+            txt: txt,
+            createData: new Date().getTime()
+        });
+
+        if (txt.length) {
+            document.querySelector(".textarea").value = "";
+        }
+    }
+
+    function get_data_one(key){
+        var memoRef = database.ref('memos/'+ userInfo.uid +'/'+key)
+        .once('value').then(function(snapshot){
+            document.querySelector(".textarea").value = snapshot.val().txt;
+        });
+    }
+
+    (function(){
+        document.querySelector(".textarea").addEventListener("blur", ()=> {
+            saveData();
+        });
+    })();
+    </script>
+</body>
+</html>
