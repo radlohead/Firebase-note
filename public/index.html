@@ -15,6 +15,7 @@
 </head>
 <body>
     <textarea class="textarea"></textarea>
+    <button onclick="initMemo();">등록</button>
     <div class="result"></div>
 
     <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase.js"></script>
@@ -52,19 +53,29 @@
         var memoRef = database.ref('memos/'+ userInfo.uid);
         
         memoRef.on('child_added', on_added_child);
+        memoRef.on('child_changed', function(data){
+            var key = data.key;
+            var memoData = data.val();
+            var txt = memoData.txt;
+            var title = txt.substr(0, txt.indexOf('\n'));
+            var firstTxt = txt.substr(0, 1);
+            
+            document.querySelector(`.result > #${key}`).querySelector(".title").innerText = title;
+            document.querySelector(`.result > #${key}`).querySelector(".txt").innerText = txt.replace(/\n/g,"");
+        });
     }
 
     function on_added_child(data){
         var key = data.key;
         var memoData = data.val();
         var txt = memoData.txt;
-        var title = memoData.title;
+        var title = txt.substr(0, txt.indexOf('\n'));
         var firstTxt = txt.substr(0, 1);
 
         var html = `<li id=${key} onClick=get_data_one(this.id);>
-            <i>${firstTxt}</i>
-            <span>${title}</span>
-            <p>${txt}</p>
+            <i class=firstTxt>${firstTxt}</i>
+            <span class=title>${title}</span>
+            <p class=txt>${txt}</p>
         </li>`;
 
         document.querySelector(".result").innerHTML += html;
@@ -95,6 +106,11 @@
         if (txt.length) {
             document.querySelector(".textarea").value = "";
         }
+    }
+
+    function initMemo(){
+        this.saveData();
+        selectedKey = "";
     }
 
     function get_data_one(key){
