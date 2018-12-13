@@ -22,6 +22,7 @@
     var auth;
     var database;
     var userInfo;
+    var selectedKey;
     // Initialize Firebase
     var config = {
         apiKey: "AIzaSyBM0c8gHwZAD7ABjNke1bHDZgZzTK4HIuY",
@@ -77,10 +78,19 @@
             return;
         }
 
-        memoRef.push({
-            txt: txt,
-            createData: new Date().getTime()
-        });
+        if (selectedKey) {
+            memoRef = database.ref('memos/'+ userInfo.uid + '/' + selectedKey);
+            memoRef.update({
+                txt: txt,
+                createDate: new Date().getTime(),
+                updateDate: new Date().getTime()
+            });
+        } else {
+            memoRef.push({
+                txt: txt,
+                createDate: new Date().getTime()
+            });
+        }
 
         if (txt.length) {
             document.querySelector(".textarea").value = "";
@@ -88,6 +98,7 @@
     }
 
     function get_data_one(key){
+        selectedKey = key;
         var memoRef = database.ref('memos/'+ userInfo.uid +'/'+key)
         .once('value').then(function(snapshot){
             document.querySelector(".textarea").value = snapshot.val().txt;
