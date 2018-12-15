@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +19,7 @@
     <div class="result"></div>
 
     <script src="https://www.gstatic.com/firebasejs/5.7.0/firebase.js"></script>
+    
     <script>
     var auth;
     var database;
@@ -76,6 +77,7 @@
             <i class=firstTxt>${firstTxt}</i>
             <span class=title>${title}</span>
             <p class=txt>${txt}</p>
+            <button onClick=delete_one('${key}');>삭제</button>
         </li>`;
 
         document.querySelector(".result").innerHTML += html;
@@ -113,10 +115,20 @@
         selectedKey = "";
     }
 
+    function delete_one(key) {
+        var memoRef = database.ref('memos/'+ userInfo.uid +'/'+key);
+        memoRef.remove();
+        document.querySelector(`.result > #${key}`).remove();
+    }
+
     function get_data_one(key){
         selectedKey = key;
         var memoRef = database.ref('memos/'+ userInfo.uid +'/'+key)
         .once('value').then(function(snapshot){
+            if (!snapshot.val()) {
+                return;
+            }
+            
             document.querySelector(".textarea").value = snapshot.val().txt;
         });
     }
